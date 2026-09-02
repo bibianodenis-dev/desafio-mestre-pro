@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Revisar Erros - Desafio Mestre PRO{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-extrabold mb-0 text-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Caderno de Erros
+        </h2>
+        <p class="text-muted mb-0">Revise todas as questões que você errou anteriormente e reforce seu aprendizado</p>
+    </div>
+    {% if erros %}
+    <div>
+        <a href="{{ url_for('iniciar_quiz_erros') }}" class="btn btn-danger btn-lg rounded-pill px-4 fw-bold shadow">
+            <i class="bi bi-play-fill me-1"></i> Refazer Todos os Erros
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- FILTROS DO CADERNO DE ERROS -->
+<div class="glass-card p-4 mb-4">
+    <form method="GET" action="{{ url_for('revisar') }}">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="filtro_tema" class="form-label fw-bold">Tema</label>
+                <select class="form-select rounded-3" id="filtro_tema" name="tema">
+                    <option value="Todos">Todos os Temas</option>
+                    {% for t in temas %}
+                    <option value="{{ t }}" {% if filtro_tema == t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="filtro_subtema" class="form-label fw-bold">Subtema</label>
+                <select class="form-select rounded-3" id="filtro_subtema" name="subtema">
+                    <option value="Todos">Todos os Subtemas</option>
+                    {% for s in subtemas %}
+                    <option value="{{ s }}" {% if filtro_subtema == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="filtro_nivel" class="form-label fw-bold">Nível</label>
+                <select class="form-select rounded-3" id="filtro_nivel" name="nivel">
+                    <option value="Todos">Todos os Níveis</option>
+                    <option value="Fácil" {% if filtro_nivel == 'Fácil' %}selected{% endif %}>Fácil</option>
+                    <option value="Médio" {% if filtro_nivel == 'Médio' %}selected{% endif %}>Médio</option>
+                    <option value="Difícil" {% if filtro_nivel == 'Difícil' %}selected{% endif %}>Difícil</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100 rounded-3">
+                    <i class="bi bi-funnel-fill"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- LISTA DE QUESTÕES ERRADAS -->
+{% if erros %}
+<div class="d-flex flex-column gap-4">
+    {% for item in erros %}
+    {% set q = item.questao %}
+    <div class="glass-card p-4 border-start border-4 border-danger position-relative">
+        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+            <span class="badge badge-custom badge-tema">{{ q.tema }}</span>
+            <span class="badge badge-custom badge-subtema">{{ q.subtema }}</span>
+            <span class="badge badge-custom {% if q.nivel == 'Fácil' %}badge-facil{% elif q.nivel == 'Médio' %}badge-medio{% else %}badge-dificil{% endif %}">{{ q.nivel }}</span>
+            <small class="text-muted ms-auto">
+                <i class="bi bi-clock me-1"></i> Errado em: {{ item.data_resposta }}
+            </small>
+        </div>
+
+        <h5 class="fw-semibold text-dark mb-3" style="white-space: pre-line;">{{ q.pergunta }}</h5>
+
+        <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded-3 border">
+                    <small class="text-uppercase fw-bold text-muted d-block mb-1">Gabarito Oficial:</small>
+                    <strong class="fs-5 {% if q.resposta_correta == 'Verdadeiro' %}text-success{% else %}text-danger{% endif %}">
+                        <i class="bi {% if q.resposta_correta == 'Verdadeiro' %}bi-check-circle-fill{% else %}bi-x-circle-fill{% endif %} me-1"></i>
+                        {{ q.resposta_correta }}
+                    </strong>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="p-3 bg-light rounded-3 border">
+                    <small class="text-uppercase fw-bold text-muted d-block mb-1">
+                        <i class="bi bi-journal-text text-primary me-1"></i> Explicação:
+                    </small>
+                    <p class="mb-0 small text-dark lh-base">{{ q.explicacao }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-3 pt-3 border-top">
+            <form action="{{ url_for('marcar_revisada', resposta_id=item.id) }}" method="POST">
+                <button type="submit" class="btn btn-outline-success btn-sm rounded-pill px-3 fw-bold">
+                    <i class="bi bi-check2-all me-1"></i> Marcar como Revisada
+                </button>
+            </form>
+            <a href="{{ url_for('refazer_questao_unica', questao_id=q.id) }}" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold">
+                <i class="bi bi-arrow-repeat me-1"></i> Refazer Esta Questão
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card p-5 text-center my-4">
+    <div class="fs-1 text-success mb-3">🎉</div>
+    <h3 class="fw-bold">Nenhum erro pendente!</h3>
+    <p class="text-muted">Parabéns! Você não possui questões erradas para revisar com os filtros selecionados.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
+        Praticar Mais Questões
+    </a>
+</div>
+{% endif %}
+{% endblock %}

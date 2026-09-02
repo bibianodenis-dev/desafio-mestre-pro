@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Responder Questão {{ sessao.index + 1 }} de {{ sessao.total }} - Desafio Mestre PRO{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+
+        <!-- HEADER DA SESSÃO: PROGRESSO & CRONÔMETRO -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <span class="text-muted fw-bold small text-uppercase">Simulado em Andamento</span>
+                <h4 class="fw-bold mb-0 text-primary">Questão {{ sessao.index + 1 }} <span class="text-muted fw-normal">de {{ sessao.total }}</span></h4>
+            </div>
+            
+            {% if sessao.usar_cronometro %}
+            <div class="timer-container shadow-sm border" id="timerBox">
+                <i class="bi bi-clock-history text-primary fs-5" id="timerIcon"></i>
+                <span id="timerText" class="fs-5">00:00</span>
+                {% if sessao.tempo_limite > 0 %}
+                <small class="text-muted ms-1">(Limite: {{ sessao.tempo_limite }}s)</small>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- BARRA DE PROGRESSO -->
+        <div class="progress rounded-pill mb-4 shadow-sm" style="height: 10px;">
+            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                 role="progressbar" 
+                 style="width: {{ ((sessao.index + 1) / sessao.total * 100)|round(1) }}%;"></div>
+        </div>
+
+        <!-- CARD DA QUESTÃO -->
+        <div class="glass-card p-4 p-md-5">
+            <!-- BADGES DE METADADOS -->
+            <div class="d-flex flex-wrap gap-2 mb-4 align-items-center">
+                <span class="badge badge-custom badge-tema">
+                    <i class="bi bi-folder-fill me-1"></i> {{ questao.tema }}
+                </span>
+                <span class="badge badge-custom badge-subtema">
+                    <i class="bi bi-tag-fill me-1"></i> {{ questao.subtema }}
+                </span>
+                <span class="badge badge-custom {% if questao.nivel == 'Fácil' %}badge-facil{% elif questao.nivel == 'Médio' %}badge-medio{% else %}badge-dificil{% endif %}">
+                    <i class="bi bi-bar-chart-steps me-1"></i> {{ questao.nivel }}
+                </span>
+                <span class="badge bg-light text-dark border ms-auto font-heading fw-bold">
+                    <i class="bi bi-award-fill text-warning me-1"></i> {{ questao.pontuacao }} pts
+                </span>
+            </div>
+
+            <!-- ENUNCIADO DA QUESTÃO -->
+            <div class="p-4 bg-white border rounded-4 mb-4 shadow-sm">
+                <p class="fs-5 fw-medium mb-0 lh-base text-dark" style="white-space: pre-line;">
+                    {{ questao.pergunta }}
+                </p>
+            </div>
+
+            <!-- SELEÇÃO DE OPÇÕES (VERDADEIRO / FALSO) -->
+            <form id="quizForm" onsubmit="submeterResposta(event)">
+                <input type="hidden" name="questao_id" value="{{ questao.id }}">
+                <input type="hidden" name="tempo_resposta" id="tempo_resposta_input" value="0">
+                <input type="hidden" name="resposta_usuario" id="resposta_usuario_input" value="">
+
+                <div class="option-btn-container" id="optionsContainer">
+                    <button type="button" class="btn-option btn-option-verdadeiro" id="btnVerdadeiro" onclick="selecionarOpcao('Verdadeiro')">
+                        <i class="bi bi-check-circle-fill text-success fs-3"></i>
+                        <span>VERDADEIRO</span>
+                    </button>
+                    <button type="button" class="btn-option btn-option-falso" id="btnFalso" onclick="selecionarOpcao('Falso')">
+                        <i class="bi bi-x-circle-fill text-danger fs-3"></i>
+                        <span>FALSO</span>
+                    </button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill px-4" onclick="return confirm('Deseja realmente sair do simulado atual?')">
+                        <i class="bi bi-arrow-left me-1"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow" id="btnResponder" disabled>
+                        <i class="bi bi-send-fill me-2"></i> Responder
+                    </button>
+                </div>
+            </form>
+
+            <!-- CONTAINER DE FEEDBACK IMEDIATO (REPOSTA E EXPLICAÇÃO) -->
+            <div id="feedbackContainer" class="d-none">
+                <div class="feedback-card" id="feedbackCard">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="fs-1" id="feedbackIcon"></div>
+                        <div>
+                            <h3 class="fw-bold mb-0" id="feedbackTitle"></h3>
+                            <p class="mb-0 fw-semibold" id="feedbackSubtitle"></p>
+                        </div>
+                        <div class="ms-auto text-end">
+                            <span class="badge fs-6 px-3 py-2 rounded-pill fw-bold" id="feedbackPontosBadge"></span>
+                        </div>
+                    </div>
+
+                    <hr class="my-3 opacity-25">
+
+                    <!-- EXPLICAÇÃO DETALHADA -->
+                    <div class="bg-white p-3 rounded-3 border text-dark">
+                        <h6 class="fw-bold text-uppercase small text-muted mb-2">
+                            <i class="bi bi-journal-text me-1 text-primary"></i> Explicação Detalhada:
+                        </h6>
+                        <p class="mb-0 fs-6 lh-base" id="feedbackExplicacao"></p>
+                    </div>
+
+                    <div class="text-end mt-4">
+                        <button type="button" class="btn btn-dark btn-lg rounded-pill px-5 fw-bold shadow" onclick="proximaQuestao()">
+                            Próxima Questão <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let tempoSegundos = 0;
+    let timerInterval = null;
+    const usarCronometro = {{ sessao.usar_cronometro | tojson }};
+    const tempoLimite = {{ sessao.tempo_limite | tojson }};
+    let tempoRestante = tempoLimite;
+    let respostaSelecionada = null;
+    let questaoRespondida = false;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (usarCronometro) {
+            iniciarCronometro();
+        }
+    });
+
+    function iniciarCronometro() {
+        const timerText = document.getElementById('timerText');
+        const timerBox = document.getElementById('timerBox');
+
+        timerInterval = setInterval(() => {
+            tempoSegundos++;
+            document.getElementById('tempo_resposta_input').value = tempoSegundos;
+
+            if (tempoLimite > 0) {
+                tempoRestante--;
+                const min = Math.floor(tempoRestante / 60).toString().padStart(2, '0');
+                const sec = (tempoRestante % 60).toString().padStart(2, '0');
+                timerText.textContent = `${min}:${sec}`;
+
+                if (tempoRestante <= 10) {
+                    timerBox.classList.add('bg-danger-subtle', 'text-danger');
+                }
+
+                if (tempoRestante <= 0) {
+                    clearInterval(timerInterval);
+                    autoSubmeterTimeout();
+                }
+            } else {
+                const min = Math.floor(tempoSegundos / 60).toString().padStart(2, '0');
+                const sec = (tempoSegundos % 60).toString().padStart(2, '0');
+                timerText.textContent = `${min}:${sec}`;
+            }
+        }, 1000);
+    }
+
+    function selecionarOpcao(opcao) {
+        if (questaoRespondida) return;
+
+        respostaSelecionada = opcao;
+        document.getElementById('resposta_usuario_input').value = opcao;
+
+        const btnV = document.getElementById('btnVerdadeiro');
+        const btnF = document.getElementById('btnFalso');
+        const btnResp = document.getElementById('btnResponder');
+
+        btnV.classList.remove('selected');
+        btnF.classList.remove('selected');
+
+        if (opcao === 'Verdadeiro') {
+            btnV.classList.add('selected');
+        } else if (opcao === 'Falso') {
+            btnF.classList.add('selected');
+        }
+
+        btnResp.disabled = false;
+    }
+
+    function autoSubmeterTimeout() {
+        if (questaoRespondida) return;
+        alert('Tempo limite esgotado para esta questão!');
+        if (!respostaSelecionada) {
+            selecionarOpcao('Invalido');
+        }
+        submeterResposta();
+    }
+
+    function submeterResposta(e) {
+        if (e) e.preventDefault();
+        if (questaoRespondida) return;
+        if (!respostaSelecionada && tempoRestante > 0) {
+            alert('Por favor, selecione Verdadeiro ou Falso.');
+            return;
+        }
+
+        questaoRespondida = true;
+        if (timerInterval) clearInterval(timerInterval);
+
+        // Desabilitar botões
+        document.getElementById('btnResponder').disabled = true;
+        document.getElementById('btnVerdadeiro').disabled = true;
+        document.getElementById('btnFalso').disabled = true;
+
+        const formData = new FormData();
+        formData.append('questao_id', '{{ questao.id }}');
+        formData.append('resposta_usuario', respostaSelecionada || 'Sem Resposta');
+        formData.append('tempo_resposta', tempoSegundos);
+
+        fetch('{{ url_for("responder_questao") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            exibirFeedback(data);
+        })
+        .catch(err => {
+            console.error('Erro ao submeter resposta:', err);
+            alert('Ocorreu um erro ao salvar sua resposta.');
+        });
+    }
+
+    function exibirFeedback(data) {
+        const feedbackContainer = document.getElementById('feedbackContainer');
+        const feedbackCard = document.getElementById('feedbackCard');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+        const feedbackTitle = document.getElementById('feedbackTitle');
+        const feedbackSubtitle = document.getElementById('feedbackSubtitle');
+        const feedbackPontosBadge = document.getElementById('feedbackPontosBadge');
+        const feedbackExplicacao = document.getElementById('feedbackExplicacao');
+
+        feedbackContainer.classList.remove('d-none');
+
+        if (data.acertou) {
+            feedbackCard.className = 'feedback-card feedback-correto';
+            feedbackIcon.innerHTML = '🎉';
+            feedbackTitle.textContent = 'Parabéns! Você Acertou!';
+            feedbackSubtitle.textContent = `A resposta correta é realmente "${data.resposta_correta}".`;
+            feedbackPontosBadge.className = 'badge bg-success text-white px-3 py-2 rounded-pill';
+            feedbackPontosBadge.textContent = `+${data.pontos} PONTOS`;
+        } else {
+            feedbackCard.className = 'feedback-card feedback-incorreto';
+            feedbackIcon.innerHTML = '❌';
+            feedbackTitle.textContent = 'Você Errou!';
+            feedbackSubtitle.textContent = `A resposta correta é "${data.resposta_correta}". Sua opção foi "${data.resposta_usuario}".`;
+            feedbackPontosBadge.className = 'badge bg-danger text-white px-3 py-2 rounded-pill';
+            feedbackPontosBadge.textContent = `0 PONTOS`;
+        }
+
+        feedbackExplicacao.textContent = data.explicacao || 'Sem explicação registrada.';
+
+        // Rolar até o feedback
+        feedbackContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function proximaQuestao() {
+        window.location.href = '{{ url_for("proxima_questao") }}';
+    }
+</script>
+{% endblock %}

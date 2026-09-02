@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Resultado do Simulado - Desafio Mestre PRO{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- CABEÇALHO DO RESULTADO -->
+        <div class="hero-gradient text-center mb-4 py-5">
+            <span class="badge bg-white text-primary mb-2 px-3 py-2 rounded-pill fw-bold text-uppercase">
+                <i class="bi bi-flag-fill me-1"></i> Simulado Concluído
+            </span>
+            <h1 class="display-4 fw-extrabold text-white mb-2">Desempenho da Sessão</h1>
+            <p class="lead text-white-50 mb-0">Confira abaixo o resumo do seu aproveitamento e suas conquistas</p>
+        </div>
+
+        <!-- CARDS DE METRICAS CHAVE -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="kpi-card text-center">
+                    <div class="kpi-icon bg-primary-subtle text-primary mx-auto mb-2">
+                        <i class="bi bi-question-circle-fill fs-3"></i>
+                    </div>
+                    <div class="kpi-title">Questões</div>
+                    <div class="kpi-value text-primary">{{ resumo.total }}</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="kpi-card text-center">
+                    <div class="kpi-icon bg-success-subtle text-success mx-auto mb-2">
+                        <i class="bi bi-check-circle-fill fs-3"></i>
+                    </div>
+                    <div class="kpi-title">Acertos</div>
+                    <div class="kpi-value text-success">{{ resumo.acertos }}</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="kpi-card text-center">
+                    <div class="kpi-icon bg-danger-subtle text-danger mx-auto mb-2">
+                        <i class="bi bi-x-circle-fill fs-3"></i>
+                    </div>
+                    <div class="kpi-title">Erros</div>
+                    <div class="kpi-value text-danger">{{ resumo.erros }}</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="kpi-card text-center">
+                    <div class="kpi-icon bg-warning-subtle text-warning mx-auto mb-2">
+                        <i class="bi bi-percent fs-3"></i>
+                    </div>
+                    <div class="kpi-title">Aproveitamento</div>
+                    <div class="kpi-value text-dark">{{ resumo.percentual }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEGUNDA LINHA: TEMPO MÉDIO & PONTUAÇÃO -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="glass-card p-4 h-100 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted fw-bold mb-1">Tempo Médio por Questão</h6>
+                        <h2 class="fw-extrabold text-dark mb-0">{{ resumo.tempo_medio }}s</h2>
+                        <small class="text-muted">Tempo total gasto: {{ resumo.tempo_total }} segundos</small>
+                    </div>
+                    <div class="kpi-icon bg-info-subtle text-info fs-2 p-3 rounded-circle">
+                        <i class="bi bi-stopwatch-fill"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="glass-card p-4 h-100 d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted fw-bold mb-1">Pontos Obtidos na Sessão</h6>
+                        <h2 class="fw-extrabold text-success mb-0">+{{ resumo.pontos_obtidos }} Pts</h2>
+                        <small class="text-muted">Pontuação acumulada total: {{ resumo.pontuacao_total }} Pts</small>
+                    </div>
+                    <div class="kpi-icon bg-warning-subtle text-warning fs-2 p-3 rounded-circle">
+                        <i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONQUISTAS E MEDALHAS -->
+        {% if conquistas %}
+        <div class="glass-card p-4 mb-4">
+            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-trophy-fill text-warning"></i> Conquistas & Medalhas Desbloqueadas
+            </h5>
+            <div class="row g-3">
+                {% for c in conquistas %}
+                <div class="col-md-4">
+                    <div class="badge-gamification unlocked">
+                        <div class="badge-icon">{{ c.icon }}</div>
+                        <h6 class="fw-bold mb-1 text-dark">{{ c.title }}</h6>
+                        <p class="small text-muted mb-0">{{ c.desc }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- BOTÕES DE AÇÃO -->
+        <div class="glass-card p-4 text-center">
+            <h5 class="fw-bold mb-3">O que você deseja fazer agora?</h5>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg rounded-pill px-4 fw-bold shadow">
+                    <i class="bi bi-arrow-repeat me-1"></i> Novo Simulado
+                </a>
+                <a href="{{ url_for('revisar') }}" class="btn btn-outline-danger btn-lg rounded-pill px-4 fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Revisar Erros
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg rounded-pill px-4 fw-bold">
+                    <i class="bi bi-bar-chart-fill me-1"></i> Ver Dashboard
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

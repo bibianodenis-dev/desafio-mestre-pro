@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Estatísticas Inteligentes - Desafio Mestre PRO{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-extrabold mb-0 text-success">
+            <i class="bi bi-lightbulb-fill me-2"></i> Estatísticas Inteligentes
+        </h2>
+        <p class="text-muted mb-0">Análise automatizada do seu perfil de estudo com diagnósticos e plano de ação</p>
+    </div>
+    <div>
+        <a href="{{ url_for('index') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+            <i class="bi bi-play-fill me-1"></i> Ir para o Simulado
+        </a>
+    </div>
+</div>
+
+<!-- CARDS DE DIAGNÓSTICO INTELIGENTE -->
+<div class="row g-4 mb-4">
+    <!-- Tema Mais Forte -->
+    <div class="col-md-4">
+        <div class="glass-card p-4 border-start border-4 border-success h-100">
+            <small class="text-uppercase fw-bold text-success d-block mb-1">
+                <i class="bi bi-trophy-fill me-1"></i> Tema Mais Forte
+            </small>
+            <h4 class="fw-bold text-dark mb-1">{{ diag.tema_mais_forte.nome }}</h4>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="text-muted small">Aproveitamento:</span>
+                <span class="badge bg-success fs-6 px-3 py-1 rounded-pill">{{ diag.tema_mais_forte.pct }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tema Mais Fraco -->
+    <div class="col-md-4">
+        <div class="glass-card p-4 border-start border-4 border-danger h-100">
+            <small class="text-uppercase fw-bold text-danger d-block mb-1">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i> Tema Mais Fraco
+            </small>
+            <h4 class="fw-bold text-dark mb-1">{{ diag.tema_mais_fraco.nome }}</h4>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="text-muted small">Aproveitamento:</span>
+                <span class="badge bg-danger fs-6 px-3 py-1 rounded-pill">{{ diag.tema_mais_fraco.pct }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subtema Mais Fraco -->
+    <div class="col-md-4">
+        <div class="glass-card p-4 border-start border-4 border-warning h-100">
+            <small class="text-uppercase fw-bold text-warning d-block mb-1">
+                <i class="bi bi-bullseye me-1"></i> Subtema Crítico
+            </small>
+            <h4 class="fw-bold text-dark mb-1">{{ diag.subtema_mais_fraco.nome }}</h4>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="text-muted small">Aproveitamento:</span>
+                <span class="badge bg-warning text-dark fs-6 px-3 py-1 rounded-pill">{{ diag.subtema_mais_fraco.pct }}%</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SEGUNDA FILEIRA: ANÁLISE DE NÍVEL & DESEMPENHO -->
+<div class="row g-4 mb-4">
+    <!-- Nível Mais Fácil x Difícil -->
+    <div class="col-md-6">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-bar-chart-steps text-primary me-1"></i> Desempenho por Nível de Dificuldade
+            </h5>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-semibold">Nível Fácil</span>
+                    <span class="badge bg-success-subtle text-success fw-bold">{{ diag.niveis.facil.pct }}% ({{ diag.niveis.facil.acertos }}/{{ diag.niveis.facil.total }})</span>
+                </div>
+                <div class="progress rounded-pill" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ diag.niveis.facil.pct }}%;"></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-semibold">Nível Médio</span>
+                    <span class="badge bg-warning-subtle text-warning fw-bold">{{ diag.niveis.medio.pct }}% ({{ diag.niveis.medio.acertos }}/{{ diag.niveis.medio.total }})</span>
+                </div>
+                <div class="progress rounded-pill" style="height: 10px;">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ diag.niveis.medio.pct }}%;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-semibold">Nível Difícil</span>
+                    <span class="badge bg-danger-subtle text-danger fw-bold">{{ diag.niveis.dificil.pct }}% ({{ diag.niveis.dificil.acertos }}/{{ diag.niveis.dificil.total }})</span>
+                </div>
+                <div class="progress rounded-pill" style="height: 10px;">
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ diag.niveis.dificil.pct }}%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO DE SUGESTÕES DE ESTUDO GERADAS AUTOMATICAMENTE -->
+    <div class="col-md-6">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-robot text-primary fs-4"></i> Recomendador de Estudos
+            </h5>
+
+            <div class="d-flex flex-column gap-3">
+                {% for sug in sugestoes %}
+                <div class="p-3 bg-white rounded-3 border-start border-4 {{ sug.border_class }} shadow-sm">
+                    <div class="d-flex align-items-start gap-2">
+                        <div class="fs-4 {{ sug.text_class }}">{{ sug.icon }}</div>
+                        <div>
+                            <h6 class="fw-bold mb-1 {{ sug.text_class }}">{{ sug.titulo }}</h6>
+                            <p class="mb-0 small text-dark lh-base">{{ sug.mensagem }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted">Responda a mais simulados para que o recomendador inteligente processe seu perfil!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

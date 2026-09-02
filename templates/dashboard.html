@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard de Desempenho - Desafio Mestre PRO{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-extrabold mb-0">Dashboard de Desempenho</h2>
+        <p class="text-muted mb-0">Análise analítica do seu aprendizado e evolução nos estudos</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-danger rounded-pill px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalZerarHistorico">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Zerar Histórico
+        </button>
+        <a href="{{ url_for('index') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+            <i class="bi bi-play-fill me-1"></i> Iniciar Novo Quiz
+        </a>
+    </div>
+</div>
+
+<!-- CARDS DE METRICAS CHAVE (KPIS) -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-primary-subtle text-primary mb-2">
+                <i class="bi bi-journal-check"></i>
+            </div>
+            <div class="kpi-title">Respondidas</div>
+            <div class="kpi-value text-primary">{{ stats.total_respondidas }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-success-subtle text-success mb-2">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <div class="kpi-title">Total Acertos</div>
+            <div class="kpi-value text-success">{{ stats.total_acertos }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-danger-subtle text-danger mb-2">
+                <i class="bi bi-x-lg"></i>
+            </div>
+            <div class="kpi-title">Total Erros</div>
+            <div class="kpi-value text-danger">{{ stats.total_erros }}</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-warning-subtle text-warning mb-2">
+                <i class="bi bi-percent"></i>
+            </div>
+            <div class="kpi-title">Aproveitamento</div>
+            <div class="kpi-value text-dark">{{ stats.percentual_geral }}%</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-info-subtle text-info mb-2">
+                <i class="bi bi-stopwatch"></i>
+            </div>
+            <div class="kpi-title">Tempo Médio</div>
+            <div class="kpi-value text-info">{{ stats.tempo_medio_geral }}s</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="kpi-card h-100">
+            <div class="kpi-icon bg-purple-subtle text-purple mb-2">
+                <i class="bi bi-trophy"></i>
+            </div>
+            <div class="kpi-title">Pontos</div>
+            <div class="kpi-value text-purple">{{ stats.pontuacao_total }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- SEÇÃO DE GRÁFICOS PRINCIPAIS -->
+<div class="row g-4 mb-4">
+    <!-- Gráfico 1: Acertos x Erros Geral -->
+    <div class="col-lg-4">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-pie-chart-fill text-primary"></i> Acertos x Erros
+            </h5>
+            <div style="height: 260px; position: relative;">
+                <canvas id="chartAcertosErrosGeral"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico 2: Evolução Histórica -->
+    <div class="col-lg-8">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-graph-up text-primary"></i> Evolução Histórica (% Aproveitamento)
+            </h5>
+            <div style="height: 260px; position: relative;">
+                <canvas id="chartEvolucaoHistorica"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MAPA DE ERROS POR TEMA E SUBTEMA -->
+<div class="row g-4 mb-4">
+    <!-- MAPA DE ERROS POR TEMA (RANKING DO PIOR PARA O MELHOR) -->
+    <div class="col-lg-6">
+        <div class="glass-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-exclamation-octagon-fill text-danger me-1"></i> Mapa de Erros por Tema
+                </h5>
+                <span class="badge bg-light text-muted border">Ordenado: Pior &rarr; Melhor</span>
+            </div>
+            <p class="text-muted small">Porcentagem de erros cometidos em cada tema principal:</p>
+
+            <div class="list-group list-group-flush border-0">
+                {% for tema in stats.mapa_erros_tema %}
+                <div class="list-group-item bg-transparent border-0 px-0 py-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">{{ tema.tema }}</span>
+                        <span class="badge {% if tema.percentual_erro >= 60 %}bg-danger{% elif tema.percentual_erro >= 40 %}bg-warning text-dark{% else %}bg-success{% endif %} px-2 py-1">
+                            {{ tema.percentual_erro }}% de erro
+                        </span>
+                    </div>
+                    <div class="progress rounded-pill" style="height: 8px;">
+                        <div class="progress-bar {% if tema.percentual_erro >= 60 %}bg-danger{% elif tema.percentual_erro >= 40 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ tema.percentual_erro }}%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">{{ tema.erros }} erros de {{ tema.total }} questões</small>
+                        <small class="text-muted">Aproveitamento: {{ tema.percentual_acerto }}%</small>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">Nenhuma questão respondida ainda.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- MAPA DE ERROS POR SUBTEMA (COM SUBTEMA MAIS FORTE / FRACO) -->
+    <div class="col-lg-6">
+        <div class="glass-card p-4 h-100">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-layers-half text-secondary me-1"></i> Mapa por Subtema
+            </h5>
+
+            <!-- Destaques Inteligentes -->
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <div class="p-3 bg-success-subtle rounded-3 border border-success-subtle">
+                        <small class="text-uppercase fw-bold text-success d-block mb-1">
+                            <i class="bi bi-shield-check me-1"></i> Subtema Mais Forte
+                        </small>
+                        <strong class="text-dark fs-6 d-block text-truncate">{{ stats.subtema_mais_forte }}</strong>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 bg-danger-subtle rounded-3 border border-danger-subtle">
+                        <small class="text-uppercase fw-bold text-danger d-block mb-1">
+                            <i class="bi bi-shield-slash me-1"></i> Subtema Mais Fraco
+                        </small>
+                        <strong class="text-dark fs-6 d-block text-truncate">{{ stats.subtema_mais_fraco }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico de Barras por Subtema -->
+            <div style="height: 240px; position: relative;">
+                <canvas id="chartSubtemas"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SEGUNDA FILEIRA DE GRÁFICOS: TEMPO MÉDIO & PIZZA POR TEMA -->
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-speedometer2 text-info me-1"></i> Tempo Médio por Tema (segundos)
+            </h5>
+            <div style="height: 250px; position: relative;">
+                <canvas id="chartTempoMedioTema"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="glass-card p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-pie-chart text-purple me-1"></i> Distribuição de Acertos por Tema
+            </h5>
+            <div style="height: 250px; position: relative;">
+                <canvas id="chartAcertosPorTema"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    window.dashboardData = {{ stats | tojson }};
+</script>
+{% endblock %}

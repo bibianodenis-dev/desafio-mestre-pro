@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Início - Desafio Mestre PRO{% endblock %}
+
+{% block content %}
+<!-- HERO SECTION -->
+<div class="hero-gradient mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-8 mb-4 mb-lg-0">
+            <span class="badge bg-white text-primary mb-2 px-3 py-2 rounded-pill fw-bold">
+                <i class="bi bi-star-fill text-warning me-1"></i> Questões V/F
+            </span>
+            <h1 class="display-5 fw-extrabold text-white mb-3">Aprender, evoluir e conquistar resultados.</h1>
+            <p class="lead text-white-50 mb-4">
+                Pratique com questões de Verdadeiro ou Falso, acompanhe seus erros por subtema e evolua suas estatísticas em tempo real.
+            </p>
+            <div class="d-flex flex-wrap gap-3">
+                <a href="#configurar-quiz" class="btn btn-light btn-lg rounded-pill fw-bold px-4 py-2 shadow-sm text-primary">
+                    <i class="bi bi-play-fill fs-5 me-1"></i> Configurar Quiz
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 py-2">
+                    <i class="bi bi-bar-chart-fill me-1"></i> Ver Dashboard
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 text-center">
+            <div class="glass-card p-4 text-dark text-center">
+                <div class="badge-icon mb-2">🏆</div>
+                <h6 class="text-uppercase text-muted fw-bold small">Seu Nível Atual</h6>
+                <h3 class="fw-bold text-primary mb-1">{{ user_level.title }}</h3>
+                <p class="small text-muted mb-3">{{ user_level.points }} pontos acumulados</p>
+                <div class="progress rounded-pill mb-2" style="height: 10px;">
+                    <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ user_level.progress }}%;"></div>
+                </div>
+                <small class="text-muted">{{ user_level.next_target }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN GRID: CONFIGURAR QUIZ & CARDS RÁPIDOS -->
+<div class="row g-4" id="configurar-quiz">
+    <!-- COLUNA PRINCIPAL: FILTROS DO QUIZ -->
+    <div class="col-lg-8">
+        <div class="glass-card p-4 p-md-5">
+            <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-3">
+                <div class="kpi-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-sliders fs-3"></i>
+                </div>
+                <div>
+                    <h3 class="fw-bold mb-0">Personalizar Quiz</h3>
+                    <p class="text-muted mb-0">Escolha os filtros desejados para montar seu simulado</p>
+                </div>
+            </div>
+
+            <form action="{{ url_for('iniciar_quiz') }}" method="POST">
+                <div class="row g-3">
+                    <!-- Tema -->
+                    <div class="col-md-6">
+                        <label for="tema" class="form-label fw-bold">Tema</label>
+                        <select class="form-select form-select-lg rounded-3" id="tema" name="tema" onchange="atualizarSubtemas()">
+                            <option value="Todos">Todos os Temas</option>
+                            {% for t in temas %}
+                                <option value="{{ t }}">{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Subtema -->
+                    <div class="col-md-6">
+                        <label for="subtema" class="form-label fw-bold">Subtema</label>
+                        <select class="form-select form-select-lg rounded-3" id="subtema" name="subtema">
+                            <option value="Todos">Todos os Subtemas</option>
+                            {% for s in subtemas %}
+                                <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Nível -->
+                    <div class="col-md-6">
+                        <label for="nivel" class="form-label fw-bold">Nível</label>
+                        <select class="form-select rounded-3" id="nivel" name="nivel">
+                            <option value="Todos">Todos os Níveis</option>
+                            <option value="Fácil">Fácil</option>
+                            <option value="Médio">Médio</option>
+                            <option value="Difícil">Difícil</option>
+                        </select>
+                    </div>
+
+                    <!-- Quantidade -->
+                    <div class="col-md-6">
+                        <label for="quantidade" class="form-label fw-bold">Qtd. Questões</label>
+                        <select class="form-select rounded-3" id="quantidade" name="quantidade">
+                            <option value="5">5 Questões</option>
+                            <option value="10" selected>10 Questões</option>
+                            <option value="20">20 Questões</option>
+                            <option value="50">50 Questões</option>
+                            <option value="0">Todas Disponíveis</option>
+                        </select>
+                    </div>
+
+                    <!-- Modo de Seleção -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Modo de Seleção</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check form-option-check flex-fill border rounded-3 p-3 bg-white">
+                                <input class="form-check-input" type="radio" name="modo" id="modoAleatorio" value="Aleatório" checked>
+                                <label class="form-check-label fw-semibold" for="modoAleatorio">
+                                    <i class="bi bi-shuffle text-primary me-1"></i> Aleatório
+                                </label>
+                            </div>
+                            <div class="form-check form-option-check flex-fill border rounded-3 p-3 bg-white">
+                                <input class="form-check-input" type="radio" name="modo" id="modoSequencial" value="Sequencial">
+                                <label class="form-check-label fw-semibold" for="modoSequencial">
+                                    <i class="bi bi-sort-numeric-down text-secondary me-1"></i> Sequencial
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inéditas / Evitar Repetição -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Repetição</label>
+                        <div class="form-check border rounded-3 p-3 bg-white">
+                            <input class="form-check-input" type="checkbox" name="evitar_repetidas" id="evitarRepetidas" value="true" checked>
+                            <label class="form-check-label fw-semibold" for="evitarRepetidas">
+                                <i class="bi bi-eye-slash text-success me-1"></i> Priorizar Questões Inéditas
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- CRONÔMETRO PERSONALIZADO -->
+                    <div class="col-12">
+                        <div class="border rounded-4 p-3 bg-light-subtle mt-2">
+                            <div class="row align-items-center g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch fs-5">
+                                        <input class="form-check-input" type="checkbox" id="usar_cronometro" name="usar_cronometro" value="true" checked onchange="toggleCronometroOptions()">
+                                        <label class="form-check-label fw-bold fs-6" for="usar_cronometro">
+                                            <i class="bi bi-stopwatch text-warning me-1"></i> Ativar Cronômetro por Questão
+                                        </label>
+                                    </div>
+                                    <small class="text-muted d-block ms-5">Controle o tempo de resposta para treinar ritmo de prova</small>
+                                </div>
+                                <div class="col-md-6" id="tempo_container">
+                                    <label for="tempo_limite" class="form-label fw-bold">Tempo Limite por Questão</label>
+                                    <select class="form-select rounded-3" id="tempo_limite" name="tempo_limite">
+                                        <option value="0">Sem limite (Apenas cronômetro livre)</option>
+                                        <option value="30">30 Segundos (Rápido)</option>
+                                        <option value="45">45 Segundos</option>
+                                        <option value="60" selected>60 Segundos (1 Minuto)</option>
+                                        <option value="90">90 Segundos</option>
+                                        <option value="120">120 Segundos (2 Minutos)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botão Submeter -->
+                    <div class="col-12 mt-4 text-end">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow">
+                            <i class="bi bi-rocket-takeoff-fill me-2"></i> Iniciar Quiz Agora
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- COLUNA LATERAL: ACESSO RÁPIDO & STATS -->
+    <div class="col-lg-4">
+        <div class="d-flex flex-column gap-4">
+            <!-- Card Dashboard -->
+            <a href="{{ url_for('dashboard') }}" class="glass-card p-4 text-decoration-none text-dark d-flex align-items-center gap-3">
+                <div class="kpi-icon bg-primary text-white">
+                    <i class="bi bi-pie-chart-fill fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Dashboard</h5>
+                    <p class="text-muted small mb-0">Evolução gráfica, mapas de erro e KPIs completos</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto fs-4 text-muted"></i>
+            </a>
+
+            <!-- Card Revisar Erros -->
+            <a href="{{ url_for('revisar') }}" class="glass-card p-4 text-decoration-none text-dark d-flex align-items-center gap-3">
+                <div class="kpi-icon bg-danger text-white">
+                    <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Revisar Erros</h5>
+                    <p class="text-muted small mb-0">Refaça apenas as questões que você errou anteriormente</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto fs-4 text-muted"></i>
+            </a>
+
+            <!-- Card Estatísticas Inteligentes -->
+            <a href="{{ url_for('estatisticas') }}" class="glass-card p-4 text-decoration-none text-dark d-flex align-items-center gap-3">
+                <div class="kpi-icon bg-success text-white">
+                    <i class="bi bi-lightbulb-fill fs-3"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-1">Estatísticas Inteligentes</h5>
+                    <p class="text-muted small mb-0">Recomendações automáticas de pontos fortes e fracos</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto fs-4 text-muted"></i>
+            </a>
+
+            <!-- Resumo Rápido do Banco -->
+            <div class="glass-card p-4">
+                <h6 class="fw-bold text-uppercase text-muted small mb-3 border-bottom pb-2">Resumo da Base de Questões</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Total no Banco:</span>
+                    <strong class="text-primary">{{ total_questoes }} questões</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Total Respondidas:</span>
+                    <strong class="text-dark">{{ total_respondidas }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Formato:</span>
+                    <span class="badge bg-purple text-dark fw-bold">Verdadeiro ou Falso</span>
+                </div>
+                <hr class="my-3 opacity-25">
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalZerarHistorico">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Zerar Histórico & Progresso
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const subtemasPorTema = {{ subtemas_por_tema | tojson }};
+
+    function atualizarSubtemas() {
+        const temaSelect = document.getElementById('tema');
+        const subtemaSelect = document.getElementById('subtema');
+        const temaSelecionado = temaSelect.value;
+
+        subtemaSelect.innerHTML = '<option value="Todos">Todos os Subtemas</option>';
+
+        if (temaSelecionado === 'Todos') {
+            const todosSubtemas = new Set();
+            Object.values(subtemasPorTema).forEach(list => list.forEach(s => todosSubtemas.add(s)));
+            todosSubtemas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                subtemaSelect.appendChild(opt);
+            });
+        } else if (subtemasPorTema[temaSelecionado]) {
+            subtemasPorTema[temaSelecionado].forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                subtemaSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function toggleCronometroOptions() {
+        const switchCronometro = document.getElementById('usar_cronometro');
+        const tempoContainer = document.getElementById('tempo_container');
+        if (switchCronometro.checked) {
+            tempoContainer.style.opacity = '1';
+            tempoContainer.style.pointerEvents = 'auto';
+        } else {
+            tempoContainer.style.opacity = '0.5';
+            tempoContainer.style.pointerEvents = 'none';
+        }
+    }
+</script>
+{% endblock %}
